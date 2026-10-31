@@ -5,6 +5,8 @@ import { GeminiEmbeddingProvider } from "../gemini/embedder";
 import { ingestToEmbeddings } from "./ingest";
 import { MockEmbeddingProvider, type EmbeddingProvider } from "./embedder";
 import type { EmbeddedChunkRecord } from "./types";
+import { storeMekoContext } from "../meko/client";
+import { isYugabyteEnabled, persistKnowledgeRecords } from "../yugabyte/client";
 
 export type ProcessSourceResult = {
   success: boolean;
@@ -65,6 +67,7 @@ export async function processWebsiteSource(params: {
         botId,
         sourceId,
         crawledPages: crawl.pages,
+        parsedDocument: await Promise.all(crawl.files.map((file) => parseFile(file.buffer, file.fileName, file.mimeType))),
         chunkSize: params.chunkSize,
         chunkOverlap: params.chunkOverlap,
       },
@@ -78,7 +81,16 @@ export async function processWebsiteSource(params: {
       return { success: false, error: outcome.error };
     }
 
-    await persistRecords(supabase, outcome.records);
+    if (isYugabyteEnabled()) {
+      await persistKnowledgeRecords(outcome.records);
+    } else {
+      await persistRecords(supabase, outcome.records);
+    }
+    await storeMekoContext({
+      botId,
+      kind: "ingestion",
+      content: `Ingested ${crawl.pages.length} web pages and ${crawl.files.length} discovered PDFs from ${url}.`,
+    });
 
     await setSourceStatus(supabase, sourceId, "completed", {
       processed_at: new Date().toISOString(),

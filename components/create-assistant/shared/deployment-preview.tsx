@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import { Bot, Send, Loader2 } from "lucide-react";
 import { useWizard, type BrandState } from "@/lib/wizard/wizard-context";
-import { botsApi } from "@/lib/wizard/api-client";
+import { botsApi, type MekoContextResult } from "@/lib/wizard/api-client";
 
 type Message = {
   role: "user" | "assistant";
@@ -17,6 +17,7 @@ export function DeploymentPreview({ brand, botName }: { brand: BrandState; botNa
   ]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [meko, setMeko] = useState<MekoContextResult | null>(null);
 
   const handleSend = async (e: FormEvent) => {
     e.preventDefault();
@@ -33,6 +34,7 @@ export function DeploymentPreview({ brand, botName }: { brand: BrandState; botNa
       setIsSending(false);
 
       if (res.success) {
+        setMeko(res.meko ?? null);
         setMessages((prev) => [...prev, { role: "assistant", content: res.answer }]);
       } else {
         setMessages((prev) => [
@@ -104,6 +106,18 @@ export function DeploymentPreview({ brand, botName }: { brand: BrandState; botNa
               </div>
             )}
           </div>
+
+          {meko && (
+            <div className="mx-3 mb-2 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-[10px] text-emerald-900">
+              <div className="font-semibold uppercase tracking-wide">Meko context</div>
+              <div className="mt-1 flex gap-3">
+                <span>Recalled {meko.recalled.length}</span>
+                <span>Stored {meko.stored.length}</span>
+                <span>{meko.enabled ? "connected" : "off"}</span>
+              </div>
+              {meko.error && <div className="mt-1 text-amber-700">{meko.error}</div>}
+            </div>
+          )}
 
           {/* Chat Input */}
           <form onSubmit={handleSend} className="p-2 border-t border-slate-100 flex items-center gap-1.5">

@@ -2,6 +2,14 @@ export interface CrawledPage {
     url: string;
     title: string;
     markdown: string;
+    sourceType?: "website" | "pdf";
+}
+
+export interface CrawledFile {
+    url: string;
+    fileName: string;
+    mimeType: string;
+    buffer: Buffer;
 }
 
 export interface SourceDocument {
@@ -19,6 +27,7 @@ export interface SourceDocument {
 export interface CrawlResult {
     success: boolean;
     pages: CrawledPage[];
+    files: CrawledFile[];
     error?: string;
 }
 

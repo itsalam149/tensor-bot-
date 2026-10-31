@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { GeminiEmbeddingProvider } from "@/services/gemini/embedder";
 import { generateAnswer, type RetrievedChunk } from "@/services/gemini/chat";
+import { recallMekoContext, storeMekoContext } from "@/services/meko/client";
+import { isYugabyteEnabled, searchKnowledge } from "@/services/yugabyte/client";
 
 // Very small in-memory rate limiter (per-process). Swap for a durable store
 // (Upstash/Redis) before production — see docs/PRODUCT_ROADMAP.md.
@@ -57,29 +59,31 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const embedder = new GeminiEmbeddingProvider();
     const queryEmbedding = await embedder.embedQuery(question);
 
-    const { data: matches, error: matchError } = await supabase.rpc("match_chunks", {
-      p_bot_id: bot.id,
-      p_query_embedding: queryEmbedding,
-      p_match_count: 6,
-    });
-
-    if (matchError) {
-      return NextResponse.json({ success: false, error: "Search failed." }, { status: 500 });
-    }
-
     type MatchRow = { content: string; similarity: number; metadata: Record<string, unknown> | null };
-    const chunks: RetrievedChunk[] = ((matches ?? []) as MatchRow[]).map((m) => ({
+    let matches: MatchRow[];
+    if (isYugabyteEnabled()) {
+      matches = await searchKnowledge(bot.id, queryEmbedding, 6);
+    } else {
+      const result = await supabase.rpc("match_chunks", { p_bot_id: bot.id, p_query_embedding: queryEmbedding, p_match_count: 6 });
+      if (result.error) return NextResponse.json({ success: false, error: "Search failed." }, { status: 500 });
+      matches = (result.data ?? []) as MatchRow[];
+    }
+    const chunks: RetrievedChunk[] = matches.map((m) => ({
       content: m.content,
       similarity: m.similarity,
       metadata: m.metadata ?? {},
     }));
+
+    const meko = await recallMekoContext({ botId: bot.id, question });
 
     const result = await generateAnswer({
       botName: bot.name,
       question,
       chunks,
       history: Array.isArray(body.history) ? body.history : [],
+      mekoContext: meko.recalled,
     });
+    const stored = await storeMekoContext({ botId: bot.id, kind: "answer", content: `Question: ${question}\nAnswer: ${result.answer}` });
 
     // Persist the exchange for analytics / conversation history.
     const { data: session } = await supabase
@@ -108,6 +112,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       success: true,
       answer: result.answer,
       latencyMs: Date.now() - startedAt,
+      meko: { ...meko, stored: stored.stored, error: meko.error ?? stored.error },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to generate an answer.";

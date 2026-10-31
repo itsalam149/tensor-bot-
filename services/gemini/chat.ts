@@ -12,6 +12,7 @@ export type GenerateAnswerInput = {
   botName: string;
   question: string;
   chunks: RetrievedChunk[];
+  mekoContext?: string[];
   history?: { role: "user" | "assistant"; content: string }[];
 };
 
@@ -28,12 +29,13 @@ function buildSystemPrompt(botName: string): string {
   ].join(" ");
 }
 
-function buildContextBlock(chunks: RetrievedChunk[]): string {
+function buildContextBlock(chunks: RetrievedChunk[], mekoContext: string[] = []): string {
   if (chunks.length === 0) return "(no relevant context found)";
 
-  return chunks
+  const vectorContext = chunks
     .map((chunk, i) => `[${i + 1}] ${chunk.content}`)
     .join("\n\n");
+  return [...mekoContext.map((item) => `[Meko memory] ${item}`), vectorContext].join("\n\n");
 }
 
 /**
@@ -53,7 +55,7 @@ export async function generateAnswer(
 
   const client = new GoogleGenAI({ apiKey: key });
 
-  const contextBlock = buildContextBlock(input.chunks);
+  const contextBlock = buildContextBlock(input.chunks, input.mekoContext);
   const historyText = (input.history ?? [])
     .slice(-6)
     .map((m) => `${m.role === "user" ? "Visitor" : "Assistant"}: ${m.content}`)

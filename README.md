@@ -260,11 +260,12 @@ tensor-bot/
 | **Language** | TypeScript 5 | Type-safe codebase |
 | **Styling** | Tailwind CSS 4 | Utility-first styling |
 | **Auth** | Supabase Auth + SSR | Email auth, sessions, OAuth |
-| **Database** | Supabase (Postgres) | Bot/source/chunk/user records |
+| **Database** | YugabyteDB or Supabase (Postgres) | Bot/source/chunk/user records |
 | **Vector Search** | pgvector *(planned)* | Semantic chunk retrieval |
 | **AI / LLM** | Groq via AI SDK | Fast inference for chat |
-| **Web Crawler** | Cheerio + Turndown | HTML parsing → Markdown |
-| **File Parsing** | *(coming)* | PDF / DOCX text extraction |
+| **Web Crawler** | Cheerio + Turndown | Same-origin sitemap, page, and linked PDF discovery |
+| **File Parsing** | pdf-parse + mammoth | PDF / DOCX / TXT text extraction |
+| **Shared context** | Meko MCP | Recall and store agent context per datapack |
 | **UI Icons** | Lucide React | Consistent icon set |
 | **Toast / Notifs** | Sonner | In-app notifications |
 
@@ -279,6 +280,18 @@ Create a `.env.local` file at the project root:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
 
+# YugabyteDB knowledge store (direct PostgreSQL connection)
+YUGABYTE_DATABASE_URL=postgresql://user:password@host:5433/database
+YUGABYTE_SSL=true
+
+# Meko shared context layer (server-only)
+MEKO_MCP_URL=https://mcp.mekodata.ai/mcp
+MEKO_API_KEY=mko_tkn_your_key
+MEKO_DATAPACK=tensor-bot-knowledge
+# Override only when your Meko tool names differ.
+MEKO_RECALL_TOOL=recall
+MEKO_WRITE_TOOL=write
+
 # AI (Groq)
 GROQ_API_KEY=your_groq_api_key
 ```
@@ -290,8 +303,9 @@ GROQ_API_KEY=your_groq_api_key
 ### Prerequisites
 
 - Node.js 20+
-- A [Supabase](https://supabase.com) project
+- A [Supabase](https://supabase.com) project, or a Supabase-compatible YugabyteDB gateway
 - A [Groq](https://groq.com) API key (or compatible AI provider)
+- A Meko datapack and MCP key for shared agent context
 
 ### Installation
 

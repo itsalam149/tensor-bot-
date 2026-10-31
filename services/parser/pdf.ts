@@ -1,5 +1,5 @@
 import type { ParsedDocument } from "./types";
-import { PDFParse } from 'pdf-parse';
+import pdfParse from "pdf-parse";
 
 function cleanText(text: string): string {
     return text
@@ -13,21 +13,16 @@ export async function parsePdf(
     buffer: Buffer,
     fileName: string
 ): Promise<ParsedDocument> {
-    const parser = new PDFParse({ data: buffer });
-    try {
-        const data = await parser.getText();
-        const content = cleanText(data.text || "");
+    const data = await pdfParse(buffer);
+    const content = cleanText(data.text || "");
 
-        return {
-            title: fileName.replace(/\.pdf$/i, ""),
-            content,
-            metadata: {
-                fileName,
-                fileType: "pdf",
-                mimeType: "application/pdf",
-            },
-        };
-    } finally {
-        await parser.destroy();
-    }
+    return {
+        title: fileName.replace(/\.pdf$/i, ""),
+        content,
+        metadata: {
+            fileName,
+            fileType: "pdf",
+            mimeType: "application/pdf",
+        },
+    };
 }

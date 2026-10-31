@@ -28,6 +28,13 @@ export type ApiSource = {
 
 export type ApiResult<T> = ({ success: true } & T) | { success: false; error: string };
 
+export type MekoContextResult = {
+  enabled: boolean;
+  recalled: string[];
+  stored: string[];
+  error?: string;
+};
+
 async function request<T>(input: string, init?: RequestInit): Promise<ApiResult<T>> {
   try {
     const res = await fetch(input, {
@@ -92,7 +99,7 @@ export const botsApi = {
     ),
 
   chat: (botId: string, question: string, history?: { role: "user" | "assistant"; content: string }[]) =>
-    request<{ answer: string; sourcesUsed: Record<string, unknown>[]; latencyMs: number }>(
+    request<{ answer: string; sourcesUsed: Record<string, unknown>[]; latencyMs: number; meko?: MekoContextResult }>(
       `/api/bots/${botId}/chat`,
       { method: "POST", body: JSON.stringify({ question, history }) }
     ),

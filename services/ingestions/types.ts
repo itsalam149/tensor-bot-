@@ -1,4 +1,4 @@
-import type { CrawledPage } from "../crawler/types";
+import type { CrawledFile, CrawledPage } from "../crawler/types";
 import type { ParsedDocument } from "../parser/types";
 
 export type SourceOrigin = "crawler" | "parser";
@@ -7,6 +7,7 @@ export type IngestionInput = {
     botId: string;
     sourceId: string;
     crawledPages?: CrawledPage[];
+    crawledFiles?: CrawledFile[];
     parsedDocument?: ParsedDocument | ParsedDocument[];
     dedupeAcrossSources?: boolean;
     chunkSize?: number;
