@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fbfbfd;
+  --foreground: #0b1020;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(15, 23, 42, 0.95);
+  color: white;
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+
+/* Gentle bobbing float for hero decorative icons */
+@keyframes float-1 {
+  0%, 100% { transform: translateY(0px) rotate(-10deg); }
+  50%       { transform: translateY(-10px) rotate(-10deg); }
+}
+@keyframes float-2 {
+  0%, 100% { transform: translateY(0px) rotate(8deg); }
+  50%       { transform: translateY(-14px) rotate(8deg); }
+}
+@keyframes float-3 {
+  0%, 100% { transform: translateY(0px) rotate(12deg); }
+  50%       { transform: translateY(-8px) rotate(12deg); }
+}
+@keyframes float-4 {
+  0%, 100% { transform: translateY(0px) rotate(-8deg); }
+  50%       { transform: translateY(-12px) rotate(-8deg); }
+}
+
+/* Typing indicator pulse dots */
+@keyframes typing-pulse {
+  0%, 60%, 100% { opacity: 0.25; transform: scale(0.85); }
+  30%            { opacity: 1;    transform: scale(1); }
+}
+
+/* Fade + slide up for scroll reveals */
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   SCROLL-DRIVEN REVEAL
+   Uses animation-timeline: view() — baseline widely available in 2024.
+   Falls back gracefully (element stays visible) in older browsers.
+   ============================================================ */
+.reveal {
+  animation: fade-slide-up 0.6s ease both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 30%;
+}
+
+.reveal-delay-1 { animation-delay: 80ms; }
+.reveal-delay-2 { animation-delay: 160ms; }
+.reveal-delay-3 { animation-delay: 240ms; }
+.reveal-delay-4 { animation-delay: 320ms; }
+
+/* ============================================================
+   FLOAT ANIMATION CLASSES
+   ============================================================ */
+.animate-float-1 {
+  animation: float-1 4.2s ease-in-out infinite;
+}
+.animate-float-2 {
+  animation: float-2 5.1s ease-in-out infinite;
+  animation-delay: -1.4s;
+}
+.animate-float-3 {
+  animation: float-3 3.8s ease-in-out infinite;
+  animation-delay: -2.2s;
+}
+.animate-float-4 {
+  animation: float-4 4.8s ease-in-out infinite;
+  animation-delay: -0.8s;
+}
+
+/* ============================================================
+   TYPING INDICATOR DOTS
+   ============================================================ */
+.typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  animation: typing-pulse 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ============================================================
+   HOVER LIFT CARD
+   ============================================================ */
+.card-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.10);
+}
+
+/* ============================================================
+   REDUCED MOTION — preserve layout, kill movement
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-1,
+  .animate-float-2,
+  .animate-float-3,
+  .animate-float-4 {
+    animation: none;
+  }
+
+  .typing-dot {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .card-lift:hover {
+    transform: none;
+  }
+}
